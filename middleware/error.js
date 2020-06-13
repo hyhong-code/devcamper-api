@@ -1,11 +1,7 @@
 const ErrorResponse = require("../utils/ErrorResponse");
 const errorHandler = (err, req, res, next) => {
   // Log to console for devs
-  console.log(
-    Object.values(err.errors)
-      .map((val) => val.message)
-      .toString()
-  );
+  console.log(err);
 
   let error = { ...err };
   error.message = err.message; // err.message is not a numerable prop, can't be spread in
