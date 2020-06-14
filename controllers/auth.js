@@ -64,3 +64,10 @@ const sendTokenResponse = (user, statusCode, res) => {
     .cookie("token", token, cookieOptions)
     .json({ success: true, token });
 };
+
+// @desc    Get currenet logged in user info
+// @route   POST /api/v1/auth/me
+// @access  Private
+exports.getMe = asyncHandler(async (req, res, next) => {
+  res.status(200).json({ success: true, data: req.user });
+});
