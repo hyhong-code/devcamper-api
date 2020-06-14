@@ -16,10 +16,7 @@ exports.registerUser = asyncHandler(async (req, res, next) => {
     role,
   });
 
-  // Get token from User model method
-  const token = user.getSignedJwtToken();
-
-  res.status(200).json({ success: true, token });
+  sendTokenResponse(user, 200, res);
 });
 
 // @desc    Login a user
@@ -45,7 +42,25 @@ exports.loginUser = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse(`Invalid Credentials`, 401));
   }
 
-  // Sign the token
-  const token = user.getSignedJwtToken();
-  res.status(200).json({ success: true, token });
+  sendTokenResponse(user, 200, res);
 });
+
+// Sign a token and send it to client in cookie
+const sendTokenResponse = (user, statusCode, res) => {
+  // Get token from User model method
+  const token = user.getSignedJwtToken();
+
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000
+    ),
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+    // clients not allow client-side JavaScript to see the cookie in document.cookie
+  };
+
+  res
+    .status(statusCode)
+    .cookie("token", token, cookieOptions)
+    .json({ success: true, token });
+};
