@@ -1,7 +1,6 @@
 const ErrorResponse = require("../utils/errorResponse");
 const asyncHandler = require("../middleware/async");
 const User = require("../models/User");
-const bcrypt = require("bcryptjs");
 
 // @desc    Register a user
 // @route   POST /api/v1/auth/register
@@ -69,5 +68,6 @@ const sendTokenResponse = (user, statusCode, res) => {
 // @route   POST /api/v1/auth/me
 // @access  Private
 exports.getMe = asyncHandler(async (req, res, next) => {
+  // Password is not in response because select:false in User model
   res.status(200).json({ success: true, data: req.user });
 });
