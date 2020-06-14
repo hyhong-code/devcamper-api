@@ -61,7 +61,7 @@ CourseSchema.post("save", async function () {
 });
 
 // Calculate avg cost befor removing
-CourseSchema.pre("remove", async function () {
+CourseSchema.post("remove", async function () {
   await this.constructor.getAverageCost(this.bootcamp);
 });
 
