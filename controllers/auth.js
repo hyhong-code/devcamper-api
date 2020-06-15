@@ -1,6 +1,7 @@
 const ErrorResponse = require("../utils/errorResponse");
 const asyncHandler = require("../middleware/async");
 const User = require("../models/User");
+const sendEmail = require("../utils/sendEmail");
 
 // @desc    Register a user
 // @route   POST /api/v1/auth/register
@@ -44,6 +45,57 @@ exports.loginUser = asyncHandler(async (req, res, next) => {
   sendTokenResponse(user, 200, res);
 });
 
+// @desc    Get currenet logged in user info
+// @route   POST /api/v1/auth/me
+// @access  Private
+exports.getMe = asyncHandler(async (req, res, next) => {
+  // Password is not in response because select:false in User model
+  res.status(200).json({ success: true, data: req.user });
+});
+
+// @desc    Forgot password
+// @route   POST /api/v1/auth/forgotpassword
+// @access  Public
+exports.forgotPassword = asyncHandler(async (req, res, next) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    return next(
+      new ErrorResponse(`No user associated with email ${email}`, 404)
+    );
+  }
+
+  // Attach reset token to user
+  const resetToken = user.getResetPasswordToken();
+
+  await user.save({ validateBeforeSave: false });
+
+  // Create reset URL
+  const resetURL = `${req.protocol}://${req.get(
+    "host"
+  )}/api/v1/resetpassword/${resetToken}`;
+
+  const message = `You are receiving this email because you (or someone else) 
+  has requested the reset of a password. Please make a PUT request to: \n\n ${resetURL}`;
+  console.log("here");
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Password reset token",
+      message,
+    });
+    res.status(200).json({ success: true, data: "Email sent" });
+  } catch (error) {
+    console.error(error);
+
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save({ validateBeforeSave: false });
+    return next(new ErrorResponse(`Email can not be sent`, 500));
+  }
+});
+
 // Sign a token and send it to client in cookie
 const sendTokenResponse = (user, statusCode, res) => {
   // Get token from User model method
@@ -63,11 +115,3 @@ const sendTokenResponse = (user, statusCode, res) => {
     .cookie("token", token, cookieOptions)
     .json({ success: true, token });
 };
-
-// @desc    Get currenet logged in user info
-// @route   POST /api/v1/auth/me
-// @access  Private
-exports.getMe = asyncHandler(async (req, res, next) => {
-  // Password is not in response because select:false in User model
-  res.status(200).json({ success: true, data: req.user });
-});
