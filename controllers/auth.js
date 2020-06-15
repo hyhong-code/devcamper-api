@@ -38,7 +38,7 @@ exports.loginUser = asyncHandler(async (req, res, next) => {
   }
 
   // Check if password match with User model method
-  const match = await user.verifyPasswrod(password);
+  const match = await user.verifyPassword(password);
   if (!match) {
     return next(new ErrorResponse(`Invalid Credentials`, 401));
   }
@@ -52,6 +52,42 @@ exports.loginUser = asyncHandler(async (req, res, next) => {
 exports.getMe = asyncHandler(async (req, res, next) => {
   // Password is not in response because select:false in User model
   res.status(200).json({ success: true, data: req.user });
+});
+
+// @desc    Update user details (name & email only)
+// @route   PUT /api/v1/auth/updatedetails
+// @access  Private
+exports.updateDetails = asyncHandler(async (req, res, next) => {
+  const fieldsToUpdate = {
+    name: req.body.name,
+    email: req.body.email,
+  };
+
+  const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
+    new: true,
+    runValidators: true,
+  });
+
+  // Password is not in response because select:false in User model
+  res.status(200).json({ success: true, data: user });
+});
+
+// @desc    Update password (takes in cur and new password)
+// @route   PUT /api/v1/auth/updatepassword
+// @access  Private
+exports.updatePassword = asyncHandler(async (req, res, next) => {
+  const user = await User.findById(req.user.id).select("+password");
+
+  // Check currrent password
+  if (!(await user.verifyPassword(req.body.curPassword))) {
+    return next(new ErrorResponse(`Password is incorrect`, 401));
+  }
+
+  // Update
+  user.password = req.body.newPassword;
+  await user.save();
+
+  sendTokenResponse(user, 200, res);
 });
 
 // @desc    Forgot password
