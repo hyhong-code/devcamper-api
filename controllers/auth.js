@@ -162,6 +162,18 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
   sendTokenResponse(user, 200, res);
 });
 
+// @desc    Logout user & clear cookie
+// @route   Get /api/v1/auth/me
+// @access  Private
+exports.logout = asyncHandler(async (req, res, next) => {
+  res.cookie("token", null, {
+    expires: new Date(Date.now() + 5 * 1000), // cookie set to null expires in 5s
+    httpOnly: true,
+  });
+
+  res.status(200).json({ success: true, data: {} });
+});
+
 // Sign a token and send it to client in cookie
 const sendTokenResponse = (user, statusCode, res) => {
   // Get token from User model method
