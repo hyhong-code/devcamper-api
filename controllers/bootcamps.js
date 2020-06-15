@@ -16,7 +16,7 @@ exports.getBootcamps = asyncHandler(async (req, res, next) => {
 // @access  Public
 exports.getBootcamp = asyncHandler(async (req, res, next) => {
   const bootcamp = await Bootcamp.findById(req.params.id).populate({
-    path: "courses",
+    path: "courses reviews",
   });
   if (!bootcamp) {
     return next(

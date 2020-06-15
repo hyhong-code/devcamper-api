@@ -120,6 +120,14 @@ BootcampSchema.virtual("courses", {
   justOne: false,
 });
 
+// (creates a reviews virtual field)
+BootcampSchema.virtual("reviews", {
+  ref: "Review",
+  localField: "_id",
+  foreignField: "bootcamp",
+  justOne: false,
+});
+
 // Mongoose middlewares / hooks
 
 // Create bootcamp slug from the name
